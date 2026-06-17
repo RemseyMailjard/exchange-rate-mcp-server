@@ -90,6 +90,12 @@ def get_exchange_rate(currency: str) -> str:
     return f"1 {base_currency} = {rate} EUR"
 
 
+
+# Bonus exercise: integrate a public exchange-rate API as an MCP tool.
+# This demonstrates calling a live, unauthenticated API (exchangerate.host)
+# and returning the result as a tool response. Add this after the demo
+# exchange rate method to show how to integrate external services.
+
 def _fetch_conversion_rates(base_currency: str) -> tuple[dict[str, float] | None, str | None]:
     """Fetch live conversion rates for a base currency from ExchangeRate-API.
 
