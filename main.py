@@ -30,12 +30,6 @@ BRANCHES = {
     }
 }
 
-EXCHANGE_RATES = {
-    "USD": "1 USD = 0.92 EUR",
-    "GBP": "1 GBP = 1.17 EUR",
-    "CHF": "1 CHF = 1.04 EUR",
-}
-
 
 @mcp.tool()
 def get_account_balance(account_number: str) -> str:
@@ -81,18 +75,18 @@ def get_branch_information(branch_code: str) -> str:
 
 @mcp.tool()
 def get_exchange_rate(currency: str) -> str:
-    """Get a demo exchange rate to EUR."""
-    normalized_currency = currency.upper()
-    exchange_rate = EXCHANGE_RATES.get(normalized_currency)
+    """Get the live exchange rate from the given currency to EUR using ExchangeRate-API."""
+    base_currency = currency.upper()
 
-    if exchange_rate is None:
-        supported = ", ".join(sorted(EXCHANGE_RATES))
-        return (
-            f"No exchange rate found for {normalized_currency}. "
-            f"Supported currencies: {supported}."
-        )
+    rates, error = _fetch_conversion_rates(base_currency)
+    if error is not None:
+        return error
 
-    return exchange_rate
+    rate = rates.get("EUR")
+    if rate is None:
+        return f"No EUR exchange rate available for {base_currency}."
+
+    return f"1 {base_currency} = {rate} EUR"
 
 
 def _fetch_conversion_rates(base_currency: str) -> tuple[dict[str, float] | None, str | None]:
