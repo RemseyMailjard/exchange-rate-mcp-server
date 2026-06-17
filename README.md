@@ -16,12 +16,14 @@ Understand how an MCP server works and how AI assistants can securely interact w
 
 ## Scenario
 
-In this fictional banking scenario, the MCP server exposes hardcoded demo operations:
+In this fictional banking scenario, the MCP server exposes demo operations:
 
-- `get_account_balance`
-- `get_customer_name`
-- `get_branch_information`
-- `get_exchange_rate` (challenge extension)
+- `get_account_balance` — look up a hardcoded internal account balance.
+- `get_customer_name` — look up a hardcoded customer name by ID.
+- `get_branch_information` — look up hardcoded branch details.
+- `get_exchange_rate` — live rate from a currency to EUR (uses ExchangeRate-API).
+- `get_live_exchange_rate` — live rate between any two currencies (defaults target to EUR).
+- `convert_currency` — convert an amount between two currencies at the live rate.
 
 ## Prerequisites
 
@@ -64,11 +66,67 @@ uv init first-mcp-server
 cd first-mcp-server
 ```
 
-### 3. Add FastMCP (already done in this repo)
+### 3. Add dependencies (already done in this repo)
 
 ```powershell
-uv add fastmcp
+uv add fastmcp httpx python-dotenv
 ```
+
+## Exchange Rate API Setup
+
+The `get_exchange_rate`, `get_live_exchange_rate`, and `convert_currency` tools call
+[ExchangeRate-API](https://www.exchangerate-api.com/) for live rates. They need an API key.
+
+### 1. Get a free API key
+
+1. Sign up at [https://app.exchangerate-api.com/](https://app.exchangerate-api.com/).
+2. Confirm your email and open the dashboard.
+3. Copy your API key (looks like `1234567890abcdef12345678`).
+
+The key is used to build the request URL:
+
+```text
+https://v6.exchangerate-api.com/v6/<API_KEY>/latest/<BASE_CURRENCY>
+```
+
+### 2. Create your `.env` file
+
+This repo includes an `.env.example`. Copy it to `.env` and insert your own key.
+
+Windows (PowerShell):
+
+```powershell
+Copy-Item .env.example .env
+```
+
+macOS / Linux:
+
+```bash
+cp .env.example .env
+```
+
+Then edit `.env`:
+
+```text
+EXCHANGE_RATE_API_KEY=your_real_key_here
+```
+
+`main.py` loads this automatically via `python-dotenv` (`load_dotenv()`), and `.env`
+is listed in `.gitignore` so your key is not committed.
+
+> Security note: `.env.example` currently contains a real-looking key. Treat it as
+> compromised — revoke/rotate it in the ExchangeRate-API dashboard and keep only a
+> placeholder in `.env.example`. Never commit a real key.
+
+### 3. Behavior without a key
+
+If `EXCHANGE_RATE_API_KEY` is missing, the currency tools return:
+
+```text
+API key is missing. Set EXCHANGE_RATE_API_KEY as an environment variable.
+```
+
+The account, customer, and branch tools work without any key (they use hardcoded data).
 
 ## Main Command Flow
 
@@ -156,7 +214,15 @@ What is the balance of account 12345?
 What is the name of customer 1001?
 Show information about branch BR001.
 What is the USD to EUR exchange rate?
+What is the live exchange rate from GBP to USD?
+Convert 100 USD to EUR.
 ```
+
+Demo data available for the prompts above:
+
+- Accounts: `12345`, `67890`
+- Customers: `1001` (John Smith), `1002` (Aisha Khan)
+- Branch: `BR001` (Utrecht)
 
 ## Demo Script
 
