@@ -347,10 +347,16 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "fastmcp" },
+    { name = "httpx" },
+    { name = "python-dotenv" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "fastmcp", specifier = ">=3.4.2" }]
+requires-dist = [
+    { name = "fastmcp", specifier = ">=3.4.2" },
+    { name = "httpx", specifier = ">=0.27.0" },
+    { name = "python-dotenv", specifier = ">=1.0.0" },
+]
 
 [[package]]
 name = "griffelib"
