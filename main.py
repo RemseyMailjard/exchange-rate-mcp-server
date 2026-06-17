@@ -3,6 +3,7 @@ import os
 import httpx
 from dotenv import load_dotenv
 from fastmcp import FastMCP
+from pathlib import Path
 
 load_dotenv()
 
@@ -178,6 +179,25 @@ from pathlib import Path
 def get_exchange_rate_resources() -> str:
     """Return the Markdown resource file for the exchange rate MCP server."""
     return Path("resources/exchange-rate-resources.md").read_text(encoding="utf-8")
+
+@mcp.prompt(
+    name="explain_exchange_rate_server",
+    description="Explains what this MCP server does by using the exchange rate resource."
+)
+def explain_exchange_rate_server() -> str:
+    """Create a prompt that explains the exchange rate MCP server."""
+    return """
+Read the resource `resources://exchange-rate-resources`.
+
+Then explain in simple words:
+1. What this MCP server does.
+2. Which currency-related tools it offers.
+3. One example question a user could ask.
+
+Keep the explanation short and beginner-friendly.
+"""
+
+
 
 if __name__ == "__main__":
     mcp.run()
