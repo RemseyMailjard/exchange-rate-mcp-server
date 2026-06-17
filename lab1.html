@@ -5,589 +5,611 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lab 1 &mdash; Connect an AI assistant to internal banking tools</title>
-  <style>
-    :root {
-      color-scheme: light;
-      --bg: #f4efe6;
-      --bg-soft: #fbf8f2;
-      --surface: rgba(255, 255, 255, 0.78);
-      --surface-strong: #ffffff;
-      --text: #132238;
-      --muted: #5b6677;
-      --accent: #0f4c81;
-      --accent-2: #b85c38;
-      --border: rgba(19, 34, 56, 0.12);
-      --shadow: 0 18px 50px rgba(19, 34, 56, 0.12);
-      --code-bg: #0f172a;
-      --code-text: #e2e8f0;
-      --chip-bg: rgba(15, 76, 129, 0.1);
-      --chip-text: #0f4c81;
-      --max-width: 1120px;
-    }
+  <h3>Steps</h3>
+  <ol>
+    <li>Create a folder named <strong>resources/</strong> at the project root.</li>
+    <li>Create a file named <strong>resources/exchange-rate-resource.md</strong> and paste the example content below.
+    </li>
+    <li>Add a small MCP tool that returns the contents of a resource file. Example for <code>main.py</code>:
+    </li>
+  </ol>
 
-    * {
-      box-sizing: border-box;
-    }
+  <h4>Example resource file (copy into <code>resources/exchange-rate-resource.md</code>)</h4>
+  <div class="code-block">
+    <div class="code-block-header">Markdown</div>
+    <pre><code># Exchange Rate MCP Server Resources
 
-    html {
-      scroll-behavior: smooth;
-    }
+## Purpose
 
-    body {
-      margin: 0;
-      color: var(--text);
-      background:
-        radial-gradient(circle at top left, rgba(15, 76, 129, 0.12), transparent 34%),
+This MCP server helps users convert money from one currency to another by using live exchange rates.
+
+## Available Tool
+
+`convert_currency(amount, from_currency, to_currency)` — converts an amount using a live rate.
+
+## Currency Codes
+
+Use ISO 4217 codes, for example: EUR, USD, GBP, JPY.
+
+## Demo Scenario
+
+Example: Convert 1200 USD to EUR using the MCP tool.
+</code></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-block-header">Python</div>
+    <pre><code>@mcp.tool()
         radial-gradient(circle at right 10%, rgba(184, 92, 56, 0.10), transparent 30%),
-        linear-gradient(180deg, #f8f2e8 0%, #f4efe6 55%, #efe7da 100%);
-      font-family: "Segoe UI", "Trebuchet MS", sans-serif;
-      line-height: 1.6;
-    }
-
-    a {
-      color: var(--accent);
-      text-decoration-thickness: 2px;
-      text-underline-offset: 0.18em;
-    }
-
-    .page-shell {
-      max-width: var(--max-width);
-      margin: 0 auto;
-      padding: 32px 20px 56px;
-    }
-
-    .hero {
-      position: relative;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      border-radius: 28px;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.72));
-      box-shadow: var(--shadow);
-      padding: 32px;
-      margin-bottom: 24px;
-    }
-
-    .hero::after {
-      content: "";
-      position: absolute;
-      inset: auto -120px -120px auto;
-      width: 280px;
-      height: 280px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(15, 76, 129, 0.18), transparent 68%);
-      pointer-events: none;
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: var(--chip-bg);
-      color: var(--chip-text);
-      font-size: 0.82rem;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-
-    h1,
-    h2,
-    h3 {
-      font-family: Georgia, "Times New Roman", serif;
-      line-height: 1.15;
-      margin: 0;
-    }
-
-    h1 {
-      font-size: clamp(2.2rem, 4vw, 4rem);
-      margin-top: 18px;
-      max-width: 14ch;
-    }
-
-    .hero p {
-      max-width: 70ch;
-      margin: 18px 0 0;
-      color: var(--muted);
-      font-size: 1.05rem;
-    }
-
-    .hero-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 24px;
-    }
-
-    .meta-card {
-      background: rgba(255, 255, 255, 0.72);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 14px 16px;
-      min-width: 180px;
-      backdrop-filter: blur(8px);
-    }
-
-    .meta-card span {
-      display: block;
-      font-size: 0.78rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 6px;
-    }
-
-    .meta-card strong {
-      font-size: 1rem;
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
-      gap: 24px;
-      align-items: start;
-    }
-
-    .toc,
-    .content-card {
-      border: 1px solid var(--border);
-      background: var(--surface);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-    }
-
-    .toc {
-      position: sticky;
-      top: 18px;
-      border-radius: 22px;
-      padding: 22px;
-    }
-
-    .toc h2 {
-      font-size: 1.2rem;
-      margin-bottom: 12px;
-    }
-
-    .toc p {
-      margin: 0 0 14px;
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-
-    .toc nav {
-      display: grid;
-      gap: 8px;
-    }
-
-    .toc a {
-      display: block;
-      padding: 10px 12px;
-      border-radius: 12px;
-      text-decoration: none;
-      color: var(--text);
-      background: rgba(255, 255, 255, 0.58);
-      border: 1px solid transparent;
-    }
-
-    .toc a:hover,
-    .toc a:focus-visible {
-      border-color: rgba(15, 76, 129, 0.22);
-      background: #fff;
-    }
-
-    .content-card {
-      border-radius: 28px;
-      padding: 30px;
-    }
-
-    .section {
-      padding: 24px 0;
-      border-top: 1px solid rgba(19, 34, 56, 0.08);
-      scroll-margin-top: 24px;
-    }
-
-    .section:first-child {
-      border-top: 0;
-      padding-top: 0;
-    }
-
-    .section h2 {
-      font-size: clamp(1.55rem, 2vw, 2.25rem);
-      margin-bottom: 10px;
-    }
-
-    .section h3 {
-      font-size: 1.15rem;
-      margin-top: 18px;
-      margin-bottom: 10px;
-    }
-
-    .section p {
-      margin: 10px 0;
-    }
-
-    .muted {
-      color: var(--muted);
-    }
-
-    .card-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-      margin-top: 16px;
-    }
-
-    .info-card {
-      border: 1px solid rgba(15, 76, 129, 0.12);
-      background: linear-gradient(180deg, #fff, rgba(255, 255, 255, 0.82));
-      border-radius: 18px;
-      padding: 16px;
-    }
-
-    .info-card strong {
-      display: block;
-      margin-bottom: 6px;
-      color: var(--accent);
-    }
-
-    ul,
-    ol {
-      margin: 12px 0 12px 22px;
-      padding: 0;
-    }
-
-    li+li {
-      margin-top: 6px;
-    }
-
-    .code-block {
-      margin: 14px 0;
-      border-radius: 18px;
-      overflow: hidden;
-      border: 1px solid rgba(15, 23, 42, 0.16);
-      background: var(--code-bg);
-      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
-    }
-
-    .code-block-header {
-      padding: 10px 14px;
-      background: rgba(255, 255, 255, 0.06);
-      color: rgba(226, 232, 240, 0.78);
-      font-size: 0.82rem;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    pre {
-      margin: 0;
-      padding: 16px 18px 18px;
-      overflow-x: auto;
-      color: var(--code-text);
-      font-size: 0.95rem;
-      line-height: 1.55;
-    }
-
-    code {
-      font-family: Consolas, "SFMono-Regular", Menlo, Monaco, monospace;
-    }
-
-    .callout {
-      border-left: 4px solid var(--accent-2);
-      background: rgba(184, 92, 56, 0.08);
-      border-radius: 0 16px 16px 0;
-      padding: 14px 16px;
-      margin: 14px 0;
-    }
-
-    .footer-note {
-      margin-top: 10px;
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-
-    .progress-panel {
-      margin-bottom: 24px;
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.78));
-      box-shadow: var(--shadow);
-      padding: 22px;
-    }
-
-    .progress-panel-head {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
-    }
-
-    .progress-panel h2 {
-      font-size: 1.35rem;
-      margin: 0;
-    }
-
-    .progress-panel p {
-      margin: 6px 0 0;
-      color: var(--muted);
-    }
-
-    .progress-summary {
-      font-size: 0.95rem;
-      color: var(--muted);
-      font-weight: 600;
-    }
-
-    .progress-bar {
-      width: 100%;
-      height: 10px;
-      border-radius: 999px;
-      background: rgba(15, 76, 129, 0.12);
-      overflow: hidden;
-      margin-bottom: 16px;
-    }
-
-    .progress-bar-fill {
-      height: 100%;
-      width: 0;
-      background: linear-gradient(90deg, var(--accent), #4f8fd1);
-      border-radius: 999px;
-      transition: width 0.2s ease;
-    }
-
-    .progress-list {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px 14px;
-    }
-
-    .progress-item {
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-      padding: 12px 14px;
-      border-radius: 16px;
-      background: rgba(255, 255, 255, 0.75);
-      border: 1px solid rgba(15, 76, 129, 0.12);
-    }
-
-    .progress-item input {
-      margin-top: 3px;
-      inline-size: 18px;
-      block-size: 18px;
-      accent-color: var(--accent);
-      flex-shrink: 0;
-    }
-
-    .progress-item label {
-      cursor: pointer;
-      font-size: 0.95rem;
-      line-height: 1.45;
-    }
-
-    .progress-item.done {
-      background: rgba(15, 76, 129, 0.08);
-      border-color: rgba(15, 76, 129, 0.2);
-    }
-
-    .progress-item.done label {
-      color: var(--muted);
-      text-decoration: line-through;
-    }
-
-    .progress-actions {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 16px;
-    }
-
-    .progress-reset {
-      border: 1px solid var(--border);
-      background: #fff;
-      color: var(--accent);
-      border-radius: 999px;
-      padding: 10px 14px;
-      font: inherit;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .progress-reset:hover,
-    .progress-reset:focus-visible {
-      background: rgba(15, 76, 129, 0.06);
-    }
-
-    .lab-nav {
-      margin-top: 28px;
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .lab-nav a {
-      display: block;
-      padding: 16px 18px;
-      border-radius: 18px;
-      border: 1px solid var(--border);
-      background: linear-gradient(180deg, #fff, rgba(255, 255, 255, 0.82));
-      box-shadow: var(--shadow);
-      text-decoration: none;
-      color: var(--text);
-    }
-
-    .lab-nav a:hover,
-    .lab-nav a:focus-visible {
-      border-color: rgba(15, 76, 129, 0.26);
-      background: #fff;
-    }
-
-    .lab-nav-label {
-      display: block;
-      font-size: 0.78rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
-
-    .lab-nav-title {
-      display: block;
-      font-weight: 700;
-      color: var(--accent);
-    }
-
-    @media (max-width: 900px) {
-      .layout {
-        grid-template-columns: 1fr;
-      }
-
-      .toc {
-        position: static;
-      }
-
-      .card-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .progress-list {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 640px) {
-      .page-shell {
-        padding: 18px 12px 36px;
-      }
-
-      .hero,
-      .content-card,
-      .toc {
-        border-radius: 20px;
-        padding: 20px;
-      }
-
-      .hero-meta {
-        flex-direction: column;
-      }
-
-      .meta-card {
-        width: 100%;
-      }
-
-      .lab-nav {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* ── Status banners ─────────────────────────────────────── */
-    .status-banner {
-      display: flex;
-      align-items: flex-start;
-      gap: 14px;
-      border-radius: 18px;
-      padding: 16px 18px;
-      margin: 16px 0;
-      font-size: 0.95rem;
-      line-height: 1.5;
-    }
-
-    .status-banner .status-icon {
-      font-size: 1.4rem;
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
-
-    .status-banner strong {
-      display: block;
-      font-size: 1rem;
-      margin-bottom: 4px;
-    }
-
-    .status-banner.running {
-      background: rgba(21, 128, 61, 0.08);
-      border: 1.5px solid rgba(21, 128, 61, 0.30);
-      color: #14532d;
-    }
-
-    .status-banner.running .status-icon::before {
-      content: "✅";
-    }
-
-    .status-banner.action-needed {
-      background: rgba(180, 83, 9, 0.08);
-      border: 1.5px solid rgba(180, 83, 9, 0.28);
-      color: #78350f;
-    }
-
-    .status-banner.action-needed .status-icon::before {
-      content: "⚠️";
-    }
-
-    .status-banner.info {
-      background: rgba(15, 76, 129, 0.07);
-      border: 1.5px solid rgba(15, 76, 129, 0.22);
-      color: #0f3460;
-    }
-
-    .status-banner.info .status-icon::before {
-      content: "ℹ️";
-    }
-
-    .step-list {
-      margin: 14px 0 0;
-      padding: 0;
-      list-style: none;
-      display: grid;
-      gap: 10px;
-    }
-
-    .step-list li {
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-      padding: 12px 14px;
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.75);
-      border: 1px solid rgba(15, 76, 129, 0.10);
-    }
-
-    .step-list li .step-num {
-      background: var(--accent);
-      color: #fff;
-      font-size: 0.78rem;
-      font-weight: 800;
-      border-radius: 999px;
-      width: 22px;
-      height: 22px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
+    """Return the contents of a Markdown resource from the resources/ folder."""
+    safe_name = resource_name.replace('..', '').replace('/', '')
+    path = f"resources/{safe_name}.md"
+    try:
+        with open(path, encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return f"Resource '{resource_name}' not found."
+</code></pre>
+  </div>
+
+  <p>Example usage in Copilot Chat:</p>
+  <div class="code-block">
+    <div class="code-block-header">Prompt</div>
+    <pre><code>Use the rabobank-demo MCP server to show the exchange-rate-resource.</code></pre>
+  </div>
+
+  <p class="footer-note">This approach keeps resources as plain files that your MCP server can safely serve to
+    approved AI clients. For production, validate and sanitize resource names and consider a permissions layer.
+  </p>
+  linear-gradient(180deg, #f8f2e8 0%, #f4efe6 55%, #efe7da 100%);
+  font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+  line-height: 1.6;
+  }
+
+  a {
+  color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.18em;
+  }
+
+  .page-shell {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 32px 20px 56px;
+  }
+
+  .hero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.72));
+  box-shadow: var(--shadow);
+  padding: 32px;
+  margin-bottom: 24px;
+  }
+
+  .hero::after {
+  content: "";
+  position: absolute;
+  inset: auto -120px -120px auto;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(15, 76, 129, 0.18), transparent 68%);
+  pointer-events: none;
+  }
+
+  .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  color: var(--chip-text);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  }
+
+  h1,
+  h2,
+  h3 {
+  font-family: Georgia, "Times New Roman", serif;
+  line-height: 1.15;
+  margin: 0;
+  }
+
+  h1 {
+  font-size: clamp(2.2rem, 4vw, 4rem);
+  margin-top: 18px;
+  max-width: 14ch;
+  }
+
+  .hero p {
+  max-width: 70ch;
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-size: 1.05rem;
+  }
+
+  .hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+  }
+
+  .meta-card {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 16px;
+  min-width: 180px;
+  backdrop-filter: blur(8px);
+  }
+
+  .meta-card span {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+  }
+
+  .meta-card strong {
+  font-size: 1rem;
+  }
+
+  .layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  }
+
+  .toc,
+  .content-card {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+  }
+
+  .toc {
+  position: sticky;
+  top: 18px;
+  border-radius: 22px;
+  padding: 22px;
+  }
+
+  .toc h2 {
+  font-size: 1.2rem;
+  margin-bottom: 12px;
+  }
+
+  .toc p {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 0.95rem;
+  }
+
+  .toc nav {
+  display: grid;
+  gap: 8px;
+  }
+
+  .toc a {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid transparent;
+  }
+
+  .toc a:hover,
+  .toc a:focus-visible {
+  border-color: rgba(15, 76, 129, 0.22);
+  background: #fff;
+  }
+
+  .content-card {
+  border-radius: 28px;
+  padding: 30px;
+  }
+
+  .section {
+  padding: 24px 0;
+  border-top: 1px solid rgba(19, 34, 56, 0.08);
+  scroll-margin-top: 24px;
+  }
+
+  .section:first-child {
+  border-top: 0;
+  padding-top: 0;
+  }
+
+  .section h2 {
+  font-size: clamp(1.55rem, 2vw, 2.25rem);
+  margin-bottom: 10px;
+  }
+
+  .section h3 {
+  font-size: 1.15rem;
+  margin-top: 18px;
+  margin-bottom: 10px;
+  }
+
+  .section p {
+  margin: 10px 0;
+  }
+
+  .muted {
+  color: var(--muted);
+  }
+
+  .card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+  }
+
+  .info-card {
+  border: 1px solid rgba(15, 76, 129, 0.12);
+  background: linear-gradient(180deg, #fff, rgba(255, 255, 255, 0.82));
+  border-radius: 18px;
+  padding: 16px;
+  }
+
+  .info-card strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--accent);
+  }
+
+  ul,
+  ol {
+  margin: 12px 0 12px 22px;
+  padding: 0;
+  }
+
+  li+li {
+  margin-top: 6px;
+  }
+
+  .code-block {
+  margin: 14px 0;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  background: var(--code-bg);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+  }
+
+  .code-block-header {
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(226, 232, 240, 0.78);
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  pre {
+  margin: 0;
+  padding: 16px 18px 18px;
+  overflow-x: auto;
+  color: var(--code-text);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  }
+
+  code {
+  font-family: Consolas, "SFMono-Regular", Menlo, Monaco, monospace;
+  }
+
+  .callout {
+  border-left: 4px solid var(--accent-2);
+  background: rgba(184, 92, 56, 0.08);
+  border-radius: 0 16px 16px 0;
+  padding: 14px 16px;
+  margin: 14px 0;
+  }
+
+  .footer-note {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 0.95rem;
+  }
+
+  .progress-panel {
+  margin-bottom: 24px;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.78));
+  box-shadow: var(--shadow);
+  padding: 22px;
+  }
+
+  .progress-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  }
+
+  .progress-panel h2 {
+  font-size: 1.35rem;
+  margin: 0;
+  }
+
+  .progress-panel p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  }
+
+  .progress-summary {
+  font-size: 0.95rem;
+  color: var(--muted);
+  font-weight: 600;
+  }
+
+  .progress-bar {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(15, 76, 129, 0.12);
+  overflow: hidden;
+  margin-bottom: 16px;
+  }
+
+  .progress-bar-fill {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--accent), #4f8fd1);
+  border-radius: 999px;
+  transition: width 0.2s ease;
+  }
+
+  .progress-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+  }
+
+  .progress-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(15, 76, 129, 0.12);
+  }
+
+  .progress-item input {
+  margin-top: 3px;
+  inline-size: 18px;
+  block-size: 18px;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+  }
+
+  .progress-item label {
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  }
+
+  .progress-item.done {
+  background: rgba(15, 76, 129, 0.08);
+  border-color: rgba(15, 76, 129, 0.2);
+  }
+
+  .progress-item.done label {
+  color: var(--muted);
+  text-decoration: line-through;
+  }
+
+  .progress-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  }
+
+  .progress-reset {
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 10px 14px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  }
+
+  .progress-reset:hover,
+  .progress-reset:focus-visible {
+  background: rgba(15, 76, 129, 0.06);
+  }
+
+  .lab-nav {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  }
+
+  .lab-nav a {
+  display: block;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, #fff, rgba(255, 255, 255, 0.82));
+  box-shadow: var(--shadow);
+  text-decoration: none;
+  color: var(--text);
+  }
+
+  .lab-nav a:hover,
+  .lab-nav a:focus-visible {
+  border-color: rgba(15, 76, 129, 0.26);
+  background: #fff;
+  }
+
+  .lab-nav-label {
+  display: block;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+  }
+
+  .lab-nav-title {
+  display: block;
+  font-weight: 700;
+  color: var(--accent);
+  }
+
+  @media (max-width: 900px) {
+  .layout {
+  grid-template-columns: 1fr;
+  }
+
+  .toc {
+  position: static;
+  }
+
+  .card-grid {
+  grid-template-columns: 1fr;
+  }
+
+  .progress-list {
+  grid-template-columns: 1fr;
+  }
+  }
+
+  @media (max-width: 640px) {
+  .page-shell {
+  padding: 18px 12px 36px;
+  }
+
+  .hero,
+  .content-card,
+  .toc {
+  border-radius: 20px;
+  padding: 20px;
+  }
+
+  .hero-meta {
+  flex-direction: column;
+  }
+
+  .meta-card {
+  width: 100%;
+  }
+
+  .lab-nav {
+  grid-template-columns: 1fr;
+  }
+  }
+
+  /* ── Status banners ─────────────────────────────────────── */
+  .status-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  border-radius: 18px;
+  padding: 16px 18px;
+  margin: 16px 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  }
+
+  .status-banner .status-icon {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+  }
+
+  .status-banner strong {
+  display: block;
+  font-size: 1rem;
+  margin-bottom: 4px;
+  }
+
+  .status-banner.running {
+  background: rgba(21, 128, 61, 0.08);
+  border: 1.5px solid rgba(21, 128, 61, 0.30);
+  color: #14532d;
+  }
+
+  .status-banner.running .status-icon::before {
+  content: "✅";
+  }
+
+  .status-banner.action-needed {
+  background: rgba(180, 83, 9, 0.08);
+  border: 1.5px solid rgba(180, 83, 9, 0.28);
+  color: #78350f;
+  }
+
+  .status-banner.action-needed .status-icon::before {
+  content: "⚠️";
+  }
+
+  .status-banner.info {
+  background: rgba(15, 76, 129, 0.07);
+  border: 1.5px solid rgba(15, 76, 129, 0.22);
+  color: #0f3460;
+  }
+
+  .status-banner.info .status-icon::before {
+  content: "ℹ️";
+  }
+
+  .step-list {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+  }
+
+  .step-list li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(15, 76, 129, 0.10);
+  }
+
+  .step-list li .step-num {
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  border-radius: 999px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  }
   </style>
 </head>
 

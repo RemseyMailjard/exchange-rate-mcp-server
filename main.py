@@ -178,13 +178,13 @@ def convert_currency(amount: float, from_currency: str, to_currency: str) -> str
 from pathlib import Path
 
 @mcp.resource(
-    "resources://exchange-rate-resources",
-    name="Exchange Rate Resources",
+    "resources://exchange-rate-resource",
+    name="Exchange Rate Resource",
     description="Markdown documentation with examples, currency codes, use cases, and common errors for the exchange rate MCP server."
 )
 def get_exchange_rate_resources() -> str:
     """Return the Markdown resource file for the exchange rate MCP server."""
-    return Path("resources/exchange-rate-resources.md").read_text(encoding="utf-8")
+    return Path("resources/exchange-rate-resource.md").read_text(encoding="utf-8")
 
 @mcp.prompt(
     name="explain_exchange_rate_server",
@@ -193,7 +193,7 @@ def get_exchange_rate_resources() -> str:
 def explain_exchange_rate_server() -> str:
     """Create a prompt that explains the exchange rate MCP server."""
     return """
-Read the resource `resources://exchange-rate-resources`.
+Read the resource `resources://exchange-rate-resource`.
 
 Then explain in simple words:
 1. What this MCP server does.
