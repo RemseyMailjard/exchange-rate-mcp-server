@@ -168,6 +168,16 @@ def convert_currency(amount: float, from_currency: str, to_currency: str) -> str
         f"Exchange rate: 1 {from_currency} = {rate} {to_currency}"
     )
 
+from pathlib import Path
+
+@mcp.resource(
+    "resources://exchange-rate-resources",
+    name="Exchange Rate Resources",
+    description="Markdown documentation with examples, currency codes, use cases, and common errors for the exchange rate MCP server."
+)
+def get_exchange_rate_resources() -> str:
+    """Return the Markdown resource file for the exchange rate MCP server."""
+    return Path("resources/exchange-rate-resources.md").read_text(encoding="utf-8")
 
 if __name__ == "__main__":
     mcp.run()
