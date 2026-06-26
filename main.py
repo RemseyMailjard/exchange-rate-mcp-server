@@ -150,7 +150,8 @@ def get_live_exchange_rate(from_currency: str, to_currency: str = "EUR") -> str:
 
 @mcp.tool()
 def convert_currency(amount: float, from_currency: str, to_currency: str) -> str:
-    """Convert an amount from one currency to another using live exchange rates.
+    """Convert an amount from
+      one currency to another using live exchange rates.
 
     Args:
         amount: The amount of money to convert.
@@ -176,6 +177,39 @@ def convert_currency(amount: float, from_currency: str, to_currency: str) -> str
     )
 
 from pathlib import Path
+
+
+@mcp.resource(
+    "resources://profile",
+    name="Profile information",
+    description="Information about Chris Brown and when a user ask me Who is Chris Brown."
+)
+
+
+def get_profile_information() -> str:
+    """Return the Markdown resource file for the profile information."""
+    return Path("resources/profile.md").read_text(encoding="utf-8")
+
+
+@mcp.prompt(
+    name="get_profile_summary",
+    description="Retrieves and summarizes Chris Brown's profile information."
+)
+def get_profile_summary() -> str:
+    """Create a prompt that retrieves and summarizes the profile resource."""
+    return """
+Read the resource `resources://profile`.
+
+Then provide a brief summary of:
+1. Who is Chris Brown
+2. What are their main responsibilities
+3. Key contact information
+
+Keep the summary concise and professional.
+"""
+
+
+
 
 @mcp.resource(
     "resources://exchange-rate-resource",

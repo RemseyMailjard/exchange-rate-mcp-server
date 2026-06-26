@@ -4,10 +4,10 @@
 		{
 			"label": "Run MCP Server HTTP",
 			"type": "shell",
-			"command": "uv",
+			"command": ".venv\\Scripts\\python.exe",
 			"args": [
-				"run",
-				"fastmcp",
+				"-c",
+				"from fastmcp.cli import app; app()",
 				"run",
 				"main.py:mcp",
 				"--transport",

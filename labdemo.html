@@ -871,10 +871,10 @@
           <a href="#lab-task-7">Task 4. Run the MCP server</a>
           <a href="#lab-task-8">Task 5. Connect GitHub Copilot</a>
           <a href="#lab-task-9">Task 6. Test the MCP tools</a>
-          <a href="#lab-challenge">Challenge Exercise</a>
+          <a href="#lab-challenge">Challenge: live exchange rate tools</a>
           <a href="#lab-bonus-resource">Bonus: Add a resource</a>
           <a href="#lab-bonus-prompt">Bonus: Add a prompt</a>
-          <a href="#lab-bonus-public-api">Bonus: Live API integration</a>
+          <a href="#lab-bonus-public-api">Bonus: Robust live API</a>
           <a href="#lab-reflection">Reflection Questions</a>
           <a href="#lab-checklist">Expected Outcome</a>
           <a href="#lab-summary">Key Takeaway</a>
@@ -882,65 +882,6 @@
       </aside>
 
       <article class="content-card">
-        <section class="section" id="example-resources">
-          <h3>Steps</h3>
-          <ol>
-            <li>Create a folder named <strong>resources/</strong> at the project root.</li>
-            <li>Create a file named <strong>resources/exchange-rate-resource.md</strong> and paste the example content
-              below.</li>
-            <li>Add a small MCP tool that returns the contents of a resource file. Example for <code>main.py</code>:
-            </li>
-          </ol>
-
-          <h4>Example resource file (copy into <code>resources/exchange-rate-resource.md</code>)</h4>
-          <div class="code-block">
-            <div class="code-block-header">Markdown</div>
-            <pre><code># Exchange Rate MCP Server Resources
-
-## Purpose
-
-This MCP server helps users convert money from one currency to another by using live exchange rates.
-
-## Available Tool
-
-`convert_currency(amount, from_currency, to_currency)` — converts an amount using a live rate.
-
-## Currency Codes
-
-Use ISO 4217 codes, for example: EUR, USD, GBP, JPY.
-
-## Demo Scenario
-
-Example: Convert 1200 USD to EUR using the MCP tool.
-</code></pre>
-          </div>
-
-          <div class="code-block">
-            <div class="code-block-header">Python</div>
-            <pre><code>@mcp.tool()
-def read_resource(resource_name: str) -> str:
-    """Return the contents of a Markdown resource from the resources/ folder."""
-    safe_name = resource_name.replace('..', '').replace('/', '')
-    path = f"resources/{safe_name}.md"
-    try:
-        with open(path, encoding='utf-8') as f:
-            return f.read()
-    except FileNotFoundError:
-        return f"Resource '{resource_name}' not found."
-</code></pre>
-          </div>
-
-          <p>Example usage in Copilot Chat:</p>
-          <div class="code-block">
-            <div class="code-block-header">Prompt</div>
-            <pre><code>Use the rabobank-demo MCP server to show the exchange-rate-resource.</code></pre>
-          </div>
-
-          <p class="footer-note">This approach keeps resources as plain files that your MCP server can safely serve to
-            approved AI clients. For production, validate and sanitize resource names and consider a permissions layer.
-          </p>
-        </section>
-
         <section class="section" id="install-uv">
           <h2>1. Install uv on Windows or macOS</h2>
           <p>On Windows, open PowerShell and run:</p>
@@ -1003,13 +944,20 @@ cd first-mcp-server</code></pre>
         </section>
 
         <section class="section" id="add-fastmcp">
-          <h2>3. Add FastMCP</h2>
+          <h2>3. Add the dependencies</h2>
           <p>Install FastMCP into the project:</p>
           <div class="code-block">
             <div class="code-block-header">PowerShell</div>
             <pre><code>uv add fastmcp</code></pre>
           </div>
-          <p>For this minimal demo, fastapi and requests are not needed.</p>
+          <p>The first minimal tool only needs FastMCP. Later in this lab you add live exchange-rate tools that call an
+            external API and read a key from a <code>.env</code> file, so install those two libraries now as well:</p>
+          <div class="code-block">
+            <div class="code-block-header">PowerShell</div>
+            <pre><code>uv add httpx python-dotenv</code></pre>
+          </div>
+          <p class="muted">This matches the final <code>pyproject.toml</code>, which depends on <code>fastmcp</code>,
+            <code>httpx</code>, and <code>python-dotenv</code>. You do not need fastapi or requests.</p>
         </section>
 
         <section class="section" id="server">
@@ -1037,6 +985,9 @@ if __name__ == "__main__":
             <div class="code-block-header">Text</div>
             <pre><code>get_account_balance</code></pre>
           </div>
+          <div class="callout">Start minimal. In the lab tasks below you replace this stub with the real account,
+            customer, branch, and live exchange-rate tools, and you add the extra imports (<code>os</code>,
+            <code>httpx</code>, <code>dotenv</code>, <code>pathlib</code>) as you go.</div>
         </section>
 
         <section class="section" id="run-http">
@@ -1591,89 +1542,202 @@ Show information about branch BR001.</code></pre>
         </section>
 
         <section class="section" id="lab-challenge">
-          <h2>Challenge Exercise</h2>
-          <p>Add a new tool that returns a demo exchange rate in EUR:</p>
+          <h2>Challenge Exercise: Add live exchange rate tools</h2>
+          <p>The final server in <code>main.py</code> does not use hardcoded rates. It calls the live
+            <a href="https://www.exchangerate-api.com/" target="_blank">ExchangeRate-API</a> so the AI can answer real
+            currency questions. Follow these steps to reach that end result.</p>
+
+          <h3>Step 1. Get a free API key</h3>
+          <ol>
+            <li>Sign up at <a href="https://app.exchangerate-api.com/" target="_blank">app.exchangerate-api.com</a>.
+            </li>
+            <li>Confirm your email and open the dashboard.</li>
+            <li>Copy your API key (it looks like <code>1234567890abcdef12345678</code>).</li>
+          </ol>
+
+          <h3>Step 2. Store the key in a .env file</h3>
+          <p>Create a file named <code>.env</code> in the project root:</p>
+          <div class="code-block">
+            <div class="code-block-header">.env</div>
+            <pre><code>EXCHANGE_RATE_API_KEY=your_real_key_here</code></pre>
+          </div>
+          <p>Make sure <code>.env</code> is listed in <code>.gitignore</code> so your key is never committed.</p>
+
+          <h3>Step 3. Load the key and add the imports</h3>
+          <p>Update the top of <code>main.py</code> so it loads the <code>.env</code> file and prepares the API call:</p>
+          <div class="code-block">
+            <div class="code-block-header">Python (top of main.py)</div>
+            <pre><code>import os
+
+import httpx
+from dotenv import load_dotenv
+from fastmcp import FastMCP
+
+load_dotenv()
+
+mcp = FastMCP("Rabobank Demo MCP Server")
+
+EXCHANGE_RATE_API_KEY = os.getenv("EXCHANGE_RATE_API_KEY")
+EXCHANGE_RATE_API_BASE = "https://v6.exchangerate-api.com/v6"</code></pre>
+          </div>
+          <div class="callout">You installed <code>httpx</code> and <code>python-dotenv</code> in step 3 of Part 1. If
+            you skipped that, run <code>uv add httpx python-dotenv</code> now.</div>
+
+          <h3>Step 4. Add a shared helper that fetches live rates</h3>
+          <p>All three currency tools reuse one helper. Centralizing the network call keeps the integration reliable.</p>
           <div class="code-block">
             <div class="code-block-header">Python</div>
-            <pre><code>EXCHANGE_RATES = {
-    "USD": "1 USD = 0.92 EUR",
-    "GBP": "1 GBP = 1.17 EUR",
-    "CHF": "1 CHF = 1.04 EUR",
-}
+            <pre><code>def _fetch_conversion_rates(base_currency: str) -&gt; tuple[dict[str, float] | None, str | None]:
+    """Fetch live conversion rates for a base currency from ExchangeRate-API.
+
+    Returns a tuple of (rates, error_message). Exactly one element is non-None.
+    """
+    if not EXCHANGE_RATE_API_KEY:
+        return None, (
+            "API key is missing. Set EXCHANGE_RATE_API_KEY as an environment variable."
+        )
+
+    url = f"{EXCHANGE_RATE_API_BASE}/{EXCHANGE_RATE_API_KEY}/latest/{base_currency}"
+
+    try:
+        response = httpx.get(url, timeout=10.0)
+        response.raise_for_status()
+    except httpx.HTTPError as exc:
+        return None, f"Failed to reach exchange rate service: {exc}"
+
+    data = response.json()
+
+    if data.get("result") == "error":
+        return None, f"API error: {data.get('error-type', 'unknown-error')}"
+
+    rates = data.get("conversion_rates")
+    if not rates:
+        return None, "Unexpected response: no conversion rates returned."
+
+    return rates, None</code></pre>
+          </div>
+
+          <h3>Step 5. Add the three currency tools</h3>
+          <div class="code-block">
+            <div class="code-block-header">Python</div>
+            <pre><code>@mcp.tool()
+def get_exchange_rate(currency: str) -&gt; str:
+    """Get the live exchange rate from the given currency to EUR using ExchangeRate-API."""
+    base_currency = currency.upper()
+
+    rates, error = _fetch_conversion_rates(base_currency)
+    if error is not None:
+        return error
+
+    rate = rates.get("EUR")
+    if rate is None:
+        return f"No EUR exchange rate available for {base_currency}."
+
+    return f"1 {base_currency} = {rate} EUR"
 
 
 @mcp.tool()
-def get_exchange_rate(currency: str) -&gt; str:
-    """Get a demo exchange rate from the given currency to EUR."""
-    normalized_currency = currency.upper()
-    exchange_rate = EXCHANGE_RATES.get(normalized_currency)
+def get_live_exchange_rate(from_currency: str, to_currency: str = "EUR") -&gt; str:
+    """Get the live exchange rate between two currencies using ExchangeRate-API.
 
-    if exchange_rate is None:
-        supported = ", ".join(sorted(EXCHANGE_RATES))
-        return (
-            f"No exchange rate found for {normalized_currency}. "
-            f"Supported currencies: {supported}."
-        )
+    Args:
+        from_currency: ISO 4217 base currency code, for example USD or GBP.
+        to_currency: ISO 4217 target currency code, defaults to EUR.
+    """
+    from_currency = from_currency.upper()
+    to_currency = to_currency.upper()
 
-    return exchange_rate</code></pre>
+    rates, error = _fetch_conversion_rates(from_currency)
+    if error is not None:
+        return error
+
+    rate = rates.get(to_currency)
+    if rate is None:
+        return f"Unsupported target currency: {to_currency}"
+
+    return f"1 {from_currency} = {rate} {to_currency}"
+
+
+@mcp.tool()
+def convert_currency(amount: float, from_currency: str, to_currency: str) -&gt; str:
+    """Convert an amount from one currency to another using live exchange rates.
+
+    Args:
+        amount: The amount of money to convert.
+        from_currency: ISO 4217 currency code to convert from, for example EUR or USD.
+        to_currency: ISO 4217 currency code to convert to, for example USD or GBP.
+    """
+    from_currency = from_currency.upper()
+    to_currency = to_currency.upper()
+
+    rates, error = _fetch_conversion_rates(from_currency)
+    if error is not None:
+        return error
+
+    rate = rates.get(to_currency)
+    if rate is None:
+        return f"Unsupported target currency: {to_currency}"
+
+    converted_amount = amount * rate
+    return (
+        f"{amount:.2f} {from_currency} is approximately "
+        f"{converted_amount:.2f} {to_currency}. "
+        f"Exchange rate: 1 {from_currency} = {rate} {to_currency}"
+    )</code></pre>
           </div>
-          <p>Examples:</p>
+
+          <h3>Step 6. Test with GitHub Copilot</h3>
           <div class="code-block">
-            <div class="code-block-header">Currencies</div>
-            <pre><code>USD -&gt; EUR
-GBP -&gt; EUR
-CHF -&gt; EUR</code></pre>
+            <div class="code-block-header">Prompts</div>
+            <pre><code>What is the USD to EUR exchange rate?
+What is the live exchange rate from GBP to USD?
+Convert 100 USD to EUR.</code></pre>
           </div>
-          <p>Test it with GitHub Copilot:</p>
-          <div class="code-block">
-            <div class="code-block-header">Prompt</div>
-            <pre><code>What is the USD to EUR exchange rate?</code></pre>
-          </div>
-          <p>Expected output:</p>
-          <div class="code-block">
-            <div class="code-block-header">Example</div>
-            <pre><code>1 USD = 0.92 EUR</code></pre>
-          </div>
+          <div class="callout">No API key yet? The currency tools return
+            <code>API key is missing...</code> while the account, customer, and branch tools keep working with their
+            hardcoded data.</div>
         </section>
 
         <section class="section" id="lab-bonus-resource">
-          <h2>Bonus Exercise: Add a Resource to the MCP service</h2>
-          <p>Now that you have a working MCP server, add a human-readable resource file and expose it so the AI can
-            retrieve it. Use the example in <strong>resources/exchange-rate-resource.md</strong>.</p>
+          <h2>Bonus Exercise: Add a Resource to the MCP server</h2>
+          <p>MCP supports <strong>resources</strong> as a first-class concept, separate from tools. A resource is
+            read-only content (for example Markdown documentation) that the AI client can fetch by URI. The final
+            <code>main.py</code> exposes its documentation this way instead of as a tool.</p>
 
           <h3>Steps</h3>
           <ol>
-            <li>Place the resource file in the <strong>resources/</strong> folder (create
-              <code>resources/exchange-rate-resource.md</code> and paste the example content below).
-            </li>
-            <li>Add a small MCP tool that returns the contents of a resource file. Example for <code>main.py</code>:
-            </li>
+            <li>Make sure <code>resources/exchange-rate-resource.md</code> exists (it ships with this repo).</li>
+            <li>Add <code>from pathlib import Path</code> to the imports in <code>main.py</code>.</li>
+            <li>Register the file as an MCP resource with the <code>@mcp.resource</code> decorator:</li>
           </ol>
 
           <div class="code-block">
             <div class="code-block-header">Python</div>
-            <pre><code>@mcp.tool()
-def get_resource(resource_name: str) -&gt; str:
-    """Return the contents of a Markdown resource from the resources/ folder."""
-    safe_name = resource_name.replace('..', '').replace('/', '')
-    path = f"resources/{safe_name}.md"
-    try:
-        with open(path, encoding='utf-8') as f:
-            return f.read()
-    except FileNotFoundError:
-        return f"Resource '{resource_name}' not found."
-</code></pre>
+            <pre><code>from pathlib import Path
+
+
+@mcp.resource(
+    "resources://exchange-rate-resource",
+    name="Exchange Rate Resource",
+    description="Markdown documentation with examples, currency codes, use cases, and common errors for the exchange rate MCP server."
+)
+def get_exchange_rate_resources() -&gt; str:
+    """Return the Markdown resource file for the exchange rate MCP server."""
+    return Path("resources/exchange-rate-resource.md").read_text(encoding="utf-8")</code></pre>
           </div>
+
+          <div class="callout">The <code>resources://</code> URI is how MCP clients reference a resource. The repo also
+            registers a second resource, <code>resources://profile</code>, the same way using
+            <code>resources/profile.md</code>.</div>
 
           <p>Example usage in Copilot Chat:</p>
           <div class="code-block">
             <div class="code-block-header">Prompt</div>
-            <pre><code>Use the rabobank-demo MCP server to show the exchange-rate-resource.</code></pre>
+            <pre><code>Read the resources://exchange-rate-resource resource and summarize it.</code></pre>
           </div>
 
-          <p class="footer-note">This approach keeps resources as plain files that your MCP server can safely serve to
-            approved AI clients. For production, validate and sanitize resource names and consider a permissions layer.
-          </p>
+          <p class="footer-note">Using <code>@mcp.resource</code> instead of a tool keeps read-only content out of the
+            tool list and lets clients reference it by URI. For production, add a permissions layer.</p>
         </section>
 
         <section class="section" id="lab-bonus-prompt">
@@ -1714,47 +1778,39 @@ Keep the explanation short and beginner-friendly.
         </section>
 
         <section class="section" id="lab-bonus-public-api">
-          <h2>Bonus Exercise: Live API Integration</h2>
-          <p>This bonus shows how to turn a live third-party API into an MCP tool. The repo includes a demo tool
-            <code>get_public_exchange_rate</code> in <strong>main.py</strong> that calls <a
-              href="https://exchangerate.host" target="_blank">exchangerate.host</a>.
-          </p>
-
-          <h3>What to add</h3>
-          <ol>
-            <li>Review the <code>get_public_exchange_rate(from_currency, to_currency)</code> tool in
-              <code>main.py</code>.
-            </li>
-            <li>Start the MCP server and test the tool using Copilot Chat (Agent mode) or by calling the tool directly
-              from an MCP client.</li>
-          </ol>
-
-          <div class="code-block">
-            <div class="code-block-header">Python (example tool)</div>
-            <pre><code>@mcp.tool()
-def get_public_exchange_rate(from_currency: str, to_currency: str = "EUR") -> str:
-    """Fetch live exchange rate from exchangerate.host and return a readable result."""
-    from_currency = from_currency.upper()
-    to_currency = to_currency.upper()
-    url = f"https://api.exchangerate.host/convert?from={from_currency}&to={to_currency}"
-    resp = httpx.get(url, timeout=10.0)
-    resp.raise_for_status()
-    data = resp.json()
-    rate = data.get("info", {}).get("rate")
-    if rate is None:
-        return "Unexpected response from public exchange rate API."
-    return f"1 {from_currency} = {rate} {to_currency} (source: exchangerate.host)"
-</code></pre>
+          <h2>Bonus Exercise: Make the live API integration robust</h2>
+          <p>The currency tools you added in the challenge all share one helper,
+            <code>_fetch_conversion_rates</code>. Centralizing the network call in a single helper is what makes the
+            integration reliable. Review how it handles the three things that go wrong with live APIs:</p>
+          <div class="card-grid">
+            <div class="info-card">
+              <strong>Missing API key</strong>
+              Returns a clear message instead of crashing when <code>EXCHANGE_RATE_API_KEY</code> is not set.
+            </div>
+            <div class="info-card">
+              <strong>Network or HTTP errors</strong>
+              <code>httpx.HTTPError</code> is caught and turned into a readable tool response.
+            </div>
+            <div class="info-card">
+              <strong>API-level errors</strong>
+              Checks <code>result == "error"</code> and a missing <code>conversion_rates</code> field.
+            </div>
+            <div class="info-card">
+              <strong>Why it matters</strong>
+              The AI receives a helpful message, not a stack trace, so it can explain the problem to the user.
+            </div>
           </div>
-
-          <p>Example Copilot prompt:</p>
+          <p>Test the error path by temporarily removing the key from <code>.env</code> and restarting the server:</p>
           <div class="code-block">
             <div class="code-block-header">Prompt</div>
-            <pre><code>Use the rabobank-demo MCP server to get the live USD to EUR rate using the public API tool.</code></pre>
+            <pre><code>What is the USD to EUR exchange rate?</code></pre>
           </div>
-
-          <p class="footer-note">Tip: When integrating live APIs, handle network errors, timeouts and unexpected
-            responses. For production, add caching, rate-limit handling, and API keys where required.</p>
+          <div class="code-block">
+            <div class="code-block-header">Expected</div>
+            <pre><code>API key is missing. Set EXCHANGE_RATE_API_KEY as an environment variable.</code></pre>
+          </div>
+          <p class="footer-note">Tip: when integrating live APIs, handle network errors, timeouts and unexpected
+            responses. For production, add caching, rate-limit handling, and retries with backoff.</p>
         </section>
 
         <section class="section" id="lab-checklist">
@@ -1838,10 +1894,10 @@ Show me information about branch BR001.</code></pre>
         { id: 'lab-task-7', label: 'Run the final MCP server' },
         { id: 'lab-task-8', label: 'Connect GitHub Copilot' },
         { id: 'lab-task-9', label: 'Test the MCP tools' },
-        { id: 'lab-challenge', label: 'Complete the challenge exercise' },
+        { id: 'lab-challenge', label: 'Add live exchange rate tools' },
         { id: 'lab-bonus-resource', label: 'Add an MCP resource (bonus)' },
         { id: 'lab-bonus-prompt', label: 'Add explain prompt (bonus)' }
-        , { id: 'lab-bonus-public-api', label: 'Add live API tool (bonus)' }
+        , { id: 'lab-bonus-public-api', label: 'Make live API robust (bonus)' }
       ];
 
       var list = document.getElementById('lab-progress-list');
